@@ -1,0 +1,9 @@
+# Ignore files not needed in Docker image
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+myenv/
+.git/
+.gitignore
+README.md
