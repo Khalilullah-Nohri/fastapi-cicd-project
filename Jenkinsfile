@@ -1,5 +1,7 @@
 pipeline {
-    agent any
+    agent {
+        docker { image 'python:3.11-slim' }
+    }
 
     environment {
         DOCKER_IMAGE = "khalilullah59/fastapi-cicd-project:latest"
