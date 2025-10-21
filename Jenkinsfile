@@ -1,12 +1,8 @@
 pipeline {
-    agent {
-        docker { image 'python:3.11-slim' }
-    }
+    agent any   // use main Jenkins container
 
     environment {
         DOCKER_IMAGE = "khalilullah59/fastapi-cicd-project:latest"
-        PYTHON = "./myenv/bin/python3"
-        PIP = "./myenv/bin/pip"
     }
 
     stages {
@@ -17,25 +13,23 @@ pipeline {
             }
         }
 
-        stage('Setup Python') {
-            steps {
-                sh 'python3 -m venv myenv'
-                sh '${PIP} install --upgrade pip'
-                sh '${PIP} install -r requirements.txt'
-            }
-        }
-
         stage('Run Unit Tests') {
             steps {
-                echo "Running pytest unit tests..."
-                sh './myenv/bin/pytest code/tests/ --maxfail=1 --disable-warnings -q'
+                echo "Running tests inside Docker container..."
+                sh """
+                docker run --rm -v \$PWD:/app -w /app $DOCKER_IMAGE \
+                /bin/bash -c "python3 -m venv myenv && \
+                ./myenv/bin/pip install --upgrade pip && \
+                ./myenv/bin/pip install -r requirements.txt && \
+                ./myenv/bin/pytest code/tests/ --maxfail=1 --disable-warnings -q"
+                """
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 echo "Building Docker image..."
-                sh "docker build -t $DOCKER_IMAGE ."
+                sh "docker build -t \$DOCKER_IMAGE ."
             }
         }
 
@@ -43,14 +37,14 @@ pipeline {
             steps {
                 echo "Pushing image to Docker Hub..."
                 withDockerRegistry([ credentialsId: 'docker-hub-cred', url: '' ]) {
-                    sh "docker push $DOCKER_IMAGE"
+                    sh "docker push \$DOCKER_IMAGE"
                 }
             }
         }
 
         stage('Deploy with Docker Compose') {
             steps {
-                echo "Deploying new version..."
+                echo "Deploying latest version..."
                 sh "docker compose down"
                 sh "docker compose up -d --build"
             }
