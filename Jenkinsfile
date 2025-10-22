@@ -18,6 +18,7 @@ pipeline {
             steps {
                 echo "🔧 Building Docker image using host Docker..."
                 sh "docker -H ${DOCKER_SOCKET} build -t ${DOCKER_IMAGE} ."
+                
             }
         }
 
@@ -25,11 +26,9 @@ pipeline {
             steps {
                 echo "🧪 Running tests inside the app image..."
                 sh """
-                python3 -m venv myenv
-                ./myenv/bin/pip install --upgrade pip
-                ./myenv/bin/pip install -r requirements.txt
-                ./myenv/bin/pytest code/tests/ --maxfail=1 --disable-warnings -q
+                docker run --rm ${DOCKER_IMAGE} sh -c "pip install --upgrade pip && pip install -r requirements.txt && pytest code/tests/ --maxfail=1 --disable-warnings -q"
                 """
+
             }
     
         }
