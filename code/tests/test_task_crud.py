@@ -18,7 +18,7 @@ def db():
     Base.metadata.drop_all(bind=engine)
 
 def test_create_and_get_task(db):
-    task_data = TaskCreate(title="Test Task", description="This is a test")
+    task_data = TaskCreate(Title="Test Task", Description="This is a test", Completed=False)
     create_task(db, task_data)
     tasks = get_all_tasks(db)
     assert len(tasks) == 1
