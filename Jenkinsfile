@@ -1,5 +1,11 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image "khalilullah59/fastapi-cicd-project:latest"
+            args '-u root:root'
+        }
+    }
+
 
     environment {
         DOCKER_IMAGE = "khalilullah59/fastapi-cicd-project:latest"
@@ -22,18 +28,15 @@ pipeline {
 
         stage('Run Unit Tests (inside app image)') {
             steps {
-                echo "🧪 Running tests inside the built image..."
+                echo "🧪 Running tests inside the app image..."
                 sh """
-                docker -H ${DOCKER_SOCKET} run --rm \
-                  -v \$PWD:/app -w /app \
-                  ${DOCKER_IMAGE} /bin/bash -lc "
-                    python3 -m venv myenv && \
-                    ./myenv/bin/pip install --upgrade pip && \
-                    ./myenv/bin/pip install -r requirements.txt && \
-                    ./myenv/bin/pytest code/tests/ --maxfail=1 --disable-warnings -q
-                  "
+                python3 -m venv myenv
+                ./myenv/bin/pip install --upgrade pip
+                ./myenv/bin/pip install -r requirements.txt
+                ./myenv/bin/pytest code/tests/ --maxfail=1 --disable-warnings -q
                 """
             }
+    
         }
 
         stage('Login & Push to Docker Hub') {
