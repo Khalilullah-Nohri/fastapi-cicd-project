@@ -13,31 +13,32 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests (inside app image)') {
+        stage('Build Docker Image') {
             steps {
-                echo "Running tests inside the app image (uses image's Python)..."
-                sh """
-                # ensure we explicitly use the host docker socket (avoid TCP env):
-                docker -H ${DOCKER_SOCKET} run --rm \\
-                  -v \$PWD:/app -w /app \\
-                  ${DOCKER_IMAGE} /bin/bash -lc "python3 -m venv myenv && \
-                  ./myenv/bin/pip install --upgrade pip && \
-                  ./myenv/bin/pip install -r requirements.txt && \
-                  ./myenv/bin/pytest code/tests/ --maxfail=1 --disable-warnings -q"
-                """
+                echo "🔧 Building Docker image using host Docker..."
+                sh "docker -H ${DOCKER_SOCKET} build -t ${DOCKER_IMAGE} ."
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Run Unit Tests (inside app image)') {
             steps {
-                echo "Building Docker image (using host docker via socket)..."
-                sh "docker -H ${DOCKER_SOCKET} build -t ${DOCKER_IMAGE} ."
+                echo "🧪 Running tests inside the built image..."
+                sh """
+                docker -H ${DOCKER_SOCKET} run --rm \
+                  -v \$PWD:/app -w /app \
+                  ${DOCKER_IMAGE} /bin/bash -lc "
+                    python3 -m venv myenv && \
+                    ./myenv/bin/pip install --upgrade pip && \
+                    ./myenv/bin/pip install -r requirements.txt && \
+                    ./myenv/bin/pytest code/tests/ --maxfail=1 --disable-warnings -q
+                  "
+                """
             }
         }
 
         stage('Login & Push to Docker Hub') {
             steps {
-                echo "Logging in and pushing image to Docker Hub..."
+                echo "📦 Pushing image to Docker Hub..."
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-cred', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
                     sh """
                     docker -H ${DOCKER_SOCKET} login -u "$DOCKERHUB_USER" -p "$DOCKERHUB_PASS"
@@ -50,10 +51,9 @@ pipeline {
 
         stage('Deploy with Docker Compose') {
             steps {
-                echo "Deploying using docker compose (host docker socket)..."
+                echo "🚀 Deploying with docker-compose..."
                 sh """
-                # use the host docker socket for compose as well
-                DOCKER_HOST=${DOCKER_SOCKET} docker compose down
+                DOCKER_HOST=${DOCKER_SOCKET} docker compose down || true
                 DOCKER_HOST=${DOCKER_SOCKET} docker compose up -d --build
                 """
             }
