@@ -29,7 +29,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /app /app
 
 # Ensure Python finds your code modules
-# ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app
 
 # Expose FastAPI port
 EXPOSE 8000
