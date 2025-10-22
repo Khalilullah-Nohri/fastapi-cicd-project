@@ -22,4 +22,4 @@ def test_create_and_get_task(db):
     create_task(db, task_data)
     tasks = get_all_tasks(db)
     assert len(tasks) == 1
-    assert tasks[0].title == "Test Task"
+    assert tasks[0].Title == "Test Task"
