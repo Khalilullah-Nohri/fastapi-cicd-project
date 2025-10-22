@@ -27,22 +27,37 @@ A simple **Task Management API** built with FastAPI, MySQL, SQLAlchemy, and Dock
 
 ```bash
 fastapi-cicd-project/
-│ .env.example
-│ docker-compose.yml
-│ Dockerfile
-│ README.md
-│ requirements.txt
-│ myenv/
+│   .env.example
+│   docker-compose.yml
+│   Dockerfile
+│   README.md
+│   requirements.txt
+│
 └───code/
-│ app.py
-│ init.py
-├───api/
-├───core/
-├───crud/
-├───db/
-├───models/
-├───schemas/
-└───utils/
+    │   app.py
+    │   __init__.py
+    │
+    ├───api/
+    │       # Your route modules, e.g., users.py, items.py
+    │
+    ├───core/
+    │       # Core configurations, settings.py, etc.
+    │
+    ├───crud/
+    │       # CRUD operations for your models
+    │
+    ├───db/
+    │       # Database connection, session, etc.
+    │
+    ├───models/
+    │       # SQLAlchemy models
+    │
+    ├───schemas/
+    │       # Pydantic schemas
+    │
+    └───utils/
+            # Utility functions
+
 ```
 
 
