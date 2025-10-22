@@ -26,7 +26,7 @@ pipeline {
             steps {
                 echo "🧪 Running tests inside the app image..."
                 sh """
-                docker run --rm ${DOCKER_IMAGE} sh -c "pip install --upgrade pip && pip install -r requirements.txt && pytest code/tests/ --maxfail=1 --disable-warnings -q"
+                docker run --rm ${DOCKER_IMAGE} sh -c "pip install --upgrade pip pytest && pip install -r requirements.txt && pytest code/tests/ --maxfail=1 --disable-warnings -q"
                 """
 
             }
