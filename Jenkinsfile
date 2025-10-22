@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image "khalilullah59/fastapi-cicd-project:latest"
-            args '-u root:root'
-        }
-    }
+    agent any  // runs on the Jenkins host container
 
 
     environment {
