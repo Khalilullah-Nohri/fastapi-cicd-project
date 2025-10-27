@@ -42,11 +42,12 @@ pipeline {
             steps {
                 echo "📦 Pushing image to Docker Hub..."
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-cred', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-                    sh """
+                    sh '''
                     echo "$DOCKERHUB_PASS" | docker -H ${DOCKER_SOCKET} login -u "$DOCKERHUB_USER" --password-stdin
                     docker -H ${DOCKER_SOCKET} push ${DOCKER_IMAGE}
                     docker -H ${DOCKER_SOCKET} logout
-                    """
+                    '''
+
                 }
             }
         }
