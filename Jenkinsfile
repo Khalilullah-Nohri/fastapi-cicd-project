@@ -30,7 +30,6 @@ pipeline {
                   ${DOCKER_IMAGE} sh -c "
                     pip install --upgrade pip pytest && \
                     pip install -r requirements.txt && \
-                    // pytest code/tests/ --maxfail=1 --disable-warnings -q
                     pytest code/tests/ -v -W default
 
                   "
