@@ -11,5 +11,5 @@ class TaskCreate(TaskBase):
 class TaskResponse(TaskBase):
     id: int
 
-    class Config:
+    class ConfigDict:
         orm_mode = True
