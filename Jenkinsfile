@@ -1,9 +1,5 @@
 pipeline {
-    agent any  // runs on the Jenkins host container
-
-    tools {
-        git 'DefaultGit'
-    }
+    agent any
 
     environment {
         DOCKER_IMAGE = "khalilullah59/fastapi-cicd-project:latest"
@@ -21,7 +17,6 @@ pipeline {
             steps {
                 echo "🔧 Building Docker image using host Docker..."
                 sh "docker -H ${DOCKER_SOCKET} build -t ${DOCKER_IMAGE} ."
-                
             }
         }
 
@@ -29,12 +24,16 @@ pipeline {
             steps {
                 echo "🧪 Running tests inside the app image..."
                 sh """
-                docker run --rm ${DOCKER_IMAGE} sh -c "pip install --upgrade pip pytest && pip install -r requirements.txt && pytest code/tests/ --maxfail=1 --disable-warnings -q"
-                sh 'pytest -v -rw'
+                docker run --rm \
+                  -w /app \
+                  -e PYTHONPATH=/app \
+                  ${DOCKER_IMAGE} sh -c "
+                    pip install --upgrade pip pytest && \
+                    pip install -r requirements.txt && \
+                    pytest code/tests/ --maxfail=1 --disable-warnings -q
+                  "
                 """
-
             }
-    
         }
 
         stage('Login & Push to Docker Hub') {
@@ -42,13 +41,11 @@ pipeline {
                 echo "📦 Pushing image to Docker Hub..."
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-cred', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
                     sh """
-                    // docker -H ${DOCKER_SOCKET} login -u "$DOCKERHUB_USER" -p "$DOCKERHUB_PASS"
-                    echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                    echo "$DOCKERHUB_PASS" | docker -H ${DOCKER_SOCKET} login -u "$DOCKERHUB_USER" --password-stdin
                     docker -H ${DOCKER_SOCKET} push ${DOCKER_IMAGE}
                     docker -H ${DOCKER_SOCKET} logout
                     """
                 }
-                
             }
         }
 
