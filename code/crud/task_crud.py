@@ -6,7 +6,7 @@ def get_all_tasks(db: Session):
     return db.query(Task).all()
 
 def create_task(db: Session, task_data: TaskCreate):
-    new_task = Task(**task_data.dict())
+    new_task = Task(**task_data.model_dump())
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
