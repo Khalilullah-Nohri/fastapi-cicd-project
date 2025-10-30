@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "khalilullah59/fastapi-cicd-project:latest"
         DOCKER_SOCKET = "unix:///var/run/docker.sock"
+        K8S_DIR = "k8s"
     }
 
     stages {
@@ -15,48 +16,43 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                echo "🔧 Building Docker image using host Docker..."
+                echo "🔧 Building Docker image..."
                 sh "docker -H ${DOCKER_SOCKET} build -t ${DOCKER_IMAGE} ."
             }
         }
 
-        stage('Run Unit Tests (inside app image)') {
+        stage('Run Unit Tests') {
             steps {
-                echo "🧪 Running tests inside the app image..."
+                echo "🧪 Running tests..."
                 sh """
-                docker run --rm \
-                  -w /app \
-                  -e PYTHONPATH=/app \
-                  ${DOCKER_IMAGE} sh -c "
-                    pip install --upgrade pip pytest && \
-                    pip install -r requirements.txt && \
+                docker run --rm -w /app ${DOCKER_IMAGE} sh -c "
+                    pip install -r requirements.txt &&
                     pytest code/tests/ -v -W default
-
-                  "
+                "
                 """
             }
         }
 
-        stage('Login & Push to Docker Hub') {
+        stage('Push to Docker Hub') {
             steps {
                 echo "📦 Pushing image to Docker Hub..."
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-cred', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-cred', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh '''
-                    echo "$DOCKERHUB_PASS" | docker -H ${DOCKER_SOCKET} login -u "$DOCKERHUB_USER" --password-stdin
+                    echo "$PASS" | docker -H ${DOCKER_SOCKET} login -u "$USER" --password-stdin
                     docker -H ${DOCKER_SOCKET} push ${DOCKER_IMAGE}
                     docker -H ${DOCKER_SOCKET} logout
                     '''
-
                 }
             }
         }
 
-        stage('Deploy with Docker Compose') {
+        stage('Deploy to Kubernetes') {
             steps {
-                echo "🚀 Deploying with docker-compose..."
+                echo "🚀 Deploying to Kubernetes..."
                 sh """
-                DOCKER_HOST=${DOCKER_SOCKET} docker compose down || true
-                DOCKER_HOST=${DOCKER_SOCKET} docker compose up -d --build
+                kubectl apply -f ${K8S_DIR}/mysql-deployment.yaml
+                kubectl apply -f ${K8S_DIR}/deployment.yaml
+                kubectl apply -f ${K8S_DIR}/service.yaml
                 """
             }
         }
@@ -64,10 +60,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completed successfully!"
+            echo "✅ Deployed successfully to Kubernetes!"
         }
         failure {
-            echo "❌ Pipeline failed. Check console log for details."
+            echo "❌ Pipeline failed. Check console logs."
         }
         always {
             cleanWs()
