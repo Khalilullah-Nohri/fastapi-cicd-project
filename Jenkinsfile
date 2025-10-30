@@ -21,14 +21,19 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
+        stage('Run Unit Tests (inside app image)') {
             steps {
-                echo "🧪 Running tests..."
+                echo "🧪 Running tests inside the app image..."
                 sh """
-                docker run --rm -w /app ${DOCKER_IMAGE} sh -c "
-                    pip install -r requirements.txt &&
+                docker run --rm \
+                  -w /app \
+                  -e PYTHONPATH=/app \
+                    ${DOCKER_IMAGE} sh -c "
+                    pip install --upgrade pip pytest && \
+                    pip install -r requirements.txt && \
                     pytest code/tests/ -v -W default
-                "
+
+                  "
                 """
             }
         }
